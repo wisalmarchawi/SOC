@@ -1,0 +1,45 @@
+---
+- name: SOCaaC PLAYBOOK 1 --- Install Wazuh locally
+  hosts: localhost
+  gather_facts: false
+  become: yes
+  tasks:
+    - name: Download Wazuh installation script
+      ansible.builtin.get_url:
+        url: "https://packages.wazuh.com/4.7/wazuh-install.sh"
+        dest: "/tmp/wazuh-install.sh"
+        mode: "u=rwx,g=rx,o=rx"
+        validate_certs: yes
+
+    - name: Execute Wazuh installation script
+      ansible.builtin.shell:
+        cmd: "/tmp/wazuh-install.sh --all-in-one --verbose --ignore-check"
+
+    - name: Check if ossec-init.conf was created
+      ansible.builtin.stat:
+        path: "/var/ossec/etc/ossec-init.conf"
+      register: ossec_init_conf
+
+    - name: Check if Wazuh was installed successfully
+      ansible.builtin.debug:
+        msg: "Installation successful - Wazuh is now running on https://localhost"
+      when: ossec_init_conf.stat.exists
+
+    - name: Backup
+      ansible.builtin.command: "sudo cp wazuh-install-files.tar ~/wazuh-install-files.tar"
+
+    - name: Extract wazuh-passwords.txt from tar file
+      ansible.builtin.command: "sudo tar -O -xvf wazuh-install-files.tar wazuh-install-files/wazuh-passwords.txt"
+      register: wazuh_passwords_output
+
+    - name: Print output of extracting wazuh-passwords.txt
+      ansible.builtin.debug:
+        msg: "{{ wazuh_passwords_output.stdout }}"
+
+
+ <integration>
+      <name>custom-shuffle</name>
+      <hook_url>http://<IP>:3001/api/v1/hooks/<HOOK_ID></hook_url>
+      <level>3</level>
+      <alert_format>json</alert_format>
+ </integration>

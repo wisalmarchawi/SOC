@@ -1,0 +1,27 @@
+- name: SOCaaC PLAYBOOK 3 --- Install Cortex Locally 
+  hosts: localhost
+  gather_facts: false
+  become: yes
+  tasks:
+    - name: Download custom installation script
+      ansible.builtin.get_url:
+        url: "https://archives.strangebee.com/scripts/install.sh"
+        dest: "/tmp/install.sh"
+        mode: "u=rwx,g=rx,o=rx"
+        validate_certs: yes
+
+    - name: Ensure script is executable
+      ansible.builtin.file:
+        path: "/tmp/install.sh"
+        mode: "u=rwx,g=rx,o=rx"
+
+    - name: Run installation script with input
+      ansible.builtin.shell:
+        cmd: |
+          echo 4 | bash /tmp/install.sh
+      args:
+        executable: /bin/bash
+
+    - name: Print message
+      ansible.builtin.debug:
+        msg: "Installation successful - Cortex is now running on http://localhost:9001 . Please login with admin@cortex.local:secret"

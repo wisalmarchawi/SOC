@@ -1,0 +1,37 @@
+---
+- name: Install Shuffle
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Ensure Docker and docker-compose are installed
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - docker
+        - docker-compose
+
+    - name: Download Shuffle repository
+      git:
+        repo: https://github.com/Shuffle/Shuffle
+        dest: /opt/Shuffle
+
+    - name: Fix prerequisites for Opensearch database
+      file:
+        path: /opt/shuffle-database
+        state: directory
+        owner: 1000
+        group: 1000
+
+    - name: Disable swap
+      command: swapoff -a
+
+    - name: Set recommended sysctl parameter for Opensearch
+      sysctl:
+        name: vm.max_map_count
+        value: 262144
+
+    - name: Run docker-compose for Shuffle
+      command: docker-compose up -d
+      args:
+        chdir: /opt/Shuffle
